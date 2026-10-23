@@ -137,9 +137,10 @@ public class OverlayService extends Service {
         }
         FrameLayout view = OverlayRenderer.buildOverlay(this, cfg);
         WindowManager.LayoutParams lp = buildParams(cfg);
-        if (!cfg.passthrough) installTouchHandling(view, lp);
+        boolean passthrough = TouchFilter.effectivePassthrough(this, cfg);
+        if (!passthrough) installTouchHandling(view, lp);
         try {
-            Log.d(TAG, "show " + cfg.mode + " alpha=" + lp.alpha + " passthrough=" + cfg.passthrough);
+            Log.d(TAG, "show " + cfg.mode + " alpha=" + lp.alpha + " passthrough=" + passthrough);
             wm.addView(view, lp);
             overlay = view;
         } catch (RuntimeException ex) {
@@ -168,7 +169,8 @@ public class OverlayService extends Service {
                 | WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN
                 | WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS
                 | WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED;
-        if (c.passthrough) flags |= WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE;
+        // above the Android 12+ limit the window has to be touchable to be drawn at full alpha
+        if (TouchFilter.effectivePassthrough(this, c)) flags |= WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE;
 
         int w = full ? ViewGroup.LayoutParams.MATCH_PARENT : OverlayRenderer.dp(this, c.partialWidthDp);
         int h = full ? ViewGroup.LayoutParams.MATCH_PARENT : OverlayRenderer.dp(this, c.partialHeightDp);
@@ -238,7 +240,7 @@ public class OverlayService extends Service {
                 PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT);
         String mode = cfg.mode == OverlayConfig.Mode.FULL ? "Full screen" : "Partial";
         String text = String.format(Locale.ROOT, "%s · %d%% opacity · %s", mode, Math.round(cfg.opacity * 100),
-                cfg.passthrough ? "touches pass through" : "touches captured");
+                TouchFilter.effectivePassthrough(this, cfg) ? "touches pass through" : "touches captured");
         return new Notification.Builder(this, CHANNEL_ID)
                 .setSmallIcon(R.drawable.ic_layers)
                 .setContentTitle("Tapjacker NG overlay is up")

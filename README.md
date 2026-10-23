@@ -30,16 +30,13 @@ Build from source with `./gradlew assembleDebug` (JDK 17+, Android SDK with plat
 - Window alpha from 1.0 down to 0.1 in 0.05 steps, on every Android version.
 - Applied on `WindowManager.LayoutParams.alpha`, which is what the system's touch filter reads.
   View alpha does not count.
-- The Opacity card shows the device's `maximumObscuringOpacityForTouch` and the effective alpha
-  when the requested one is above it (see "Android 12+ behaviour" below).
-- On Android 12+ a dialog pops up the moment you drag the slider past the system limit (or turn
-  pass-through on with the slider already above it). It explains that the system will draw the
-  overlay at the limit anyway and offers three ways out: keep the value, drop back to the limit,
-  or lift the limit on the device. The value is never changed behind your back.
+- The Opacity card shows the device's `maximumObscuringOpacityForTouch` and a one-line verdict:
+  within the limit taps reach the app underneath; above it the overlay is drawn at the requested
+  alpha, 1.0 included, but touches WILL NOT go through (see "Android 12+ behaviour" below).
 - On Android 8 to 11 there is no limit. The card says so and the slider does exactly what it says.
-- Below the slider, on Android 12+, a "System limit" section shows the live values of the two
-  global settings behind the filter, whether the app can write them, and two buttons: "Lift limit
-  to 1.0" and "Restore default". See "Lifting the limit" below.
+- Below the slider, on Android 12+, a compact "System limit" line shows the live value of the
+  global setting behind the filter with two buttons: "Lift limit to 1.0" and "Restore default".
+  See "Lifting the limit" below.
 
 ### Touch handling
 
@@ -98,10 +95,13 @@ clipboard for reports and paste it back to restore it on any device.
 ## Android 12+ behaviour
 
 - The system limit is `InputManager.getMaximumObscuringOpacityForTouch()`, 0.8 on stock builds.
-- A pass-through overlay from another app is drawn at that limit no matter what you ask for.
-  Request 1.0 and the window manager renders 0.8; taps still go through. If several pass-through
-  overlays stack up and their combined opacity crosses the limit, the input dispatcher drops the
-  touch instead.
+- A pass-through (`FLAG_NOT_TOUCHABLE`) overlay from another app is drawn at that limit no
+  matter what you ask for; a touchable overlay can be fully opaque. So when you ask for more than
+  the limit with pass-through on, the app drops `FLAG_NOT_TOUCHABLE`: the overlay is drawn at the
+  alpha you set, 1.0 included, but touches WILL NOT go through, and the card and the pass-through
+  hint say so. Long-press the overlay to dismiss it in that state. Opaque *and* pass-through
+  needs the limit lifted (next section). If several pass-through overlays stack up and their
+  combined opacity crosses the limit, the input dispatcher drops the touch instead.
 - Touches that cross a pass-through overlay arrive at the target with `FLAG_WINDOW_IS_OBSCURED`.
   Views with `filterTouchesWhenObscured="true"` drop them. Activities that call
   `Window.setHideOverlayWindows(true)` hide the overlay entirely.

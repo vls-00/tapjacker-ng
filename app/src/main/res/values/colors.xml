@@ -2,18 +2,19 @@
 <resources>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
-    <color name="brand_primary">#FF006B5F</color>
-    <color name="brand_primary_light">#FF55DBC6</color>
-    <color name="brand_primary_container">#FF74F8E2</color>
-    <color name="brand_on_primary_container">#FF00201C</color>
-    <color name="brand_secondary">#FF4A635F</color>
+    <!-- crimson palette, matches the launcher icon -->
+    <color name="brand_primary">#FFA3122B</color>
+    <color name="brand_primary_light">#FFFF6B7F</color>
+    <color name="brand_primary_container">#FFFFD9DD</color>
+    <color name="brand_on_primary_container">#FF40000C</color>
+    <color name="brand_secondary">#FF6E4A52</color>
     <color name="brand_error">#FFBA1A1A</color>
     <color name="brand_error_light">#FFFFB4AB</color>
     <color name="preview_phone_bg">#FF9E9E9E</color>
     <color name="warning">#FFE65100</color>
     <color name="dim_text">#FF757575</color>
     <color name="header_subtitle">#B3FFFFFF</color>
-    <color name="header_start">#FF0B1F2E</color>
-    <color name="header_mid">#FF0E3B4A</color>
-    <color name="header_end">#FF007A6B</color>
+    <color name="header_start">#FF07050B</color>
+    <color name="header_mid">#FF1E0712</color>
+    <color name="header_end">#FF6B0F1F</color>
 </resources>
