@@ -101,13 +101,14 @@ public final class TouchFilter {
     /** One-line summary for the UI. */
     public static String status(Context ctx) {
         if (!exists()) return "No untrusted-touch filter before Android 12.";
-        return String.format(Locale.ROOT, "System limit: %.2f%s · block mode %d",
-                limit(ctx), isDefault(ctx) ? " (default)" : "", blockMode(ctx));
+        return String.format(Locale.ROOT, "%s = %.2f%s\n%s = %s",
+                KEY_MAX_OPACITY, limit(ctx), isDefault(ctx) ? " (default)" : "",
+                KEY_BLOCK_MODE, blockModeLabel(blockMode(ctx)));
     }
 
     public static String writeAccess(Context ctx) {
-        if (canWriteDirectly(ctx)) return "Lifting it gives opaque pass-through, like Android 11. WRITE_SECURE_SETTINGS granted, buttons work directly.";
-        return "Lifting it gives opaque pass-through, like Android 11. Buttons try root, otherwise show the adb commands (see README).";
+        if (canWriteDirectly(ctx)) return "WRITE_SECURE_SETTINGS granted: the buttons change the setting directly.";
+        return "WRITE_SECURE_SETTINGS not granted: the buttons try root, otherwise they show the adb commands.";
     }
 
     /** Commands to run from a host, shown when neither direct write nor root is available. */

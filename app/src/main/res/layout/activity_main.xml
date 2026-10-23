@@ -388,16 +388,31 @@
                             android:background="?attr/colorOutlineVariant" />
 
                         <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="12dp"
+                            android:text="System limit (untrusted-touch filter)"
+                            android:textAppearance="?attr/textAppearanceTitleMedium" />
+
+                        <TextView
                             android:id="@+id/tvLimitStatus"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:layout_marginTop="10dp"
-                            android:textAppearance="?attr/textAppearanceBodyMedium" />
+                            android:layout_marginTop="4dp"
+                            android:fontFamily="monospace"
+                            android:textAppearance="?attr/textAppearanceBodySmall" />
+
+                        <TextView
+                            android:id="@+id/tvLimitAccess"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="4dp"
+                            android:textAppearance="?attr/textAppearanceBodySmall" />
 
                         <LinearLayout
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:layout_marginTop="6dp"
+                            android:layout_marginTop="8dp"
                             android:orientation="horizontal">
 
                             <Button
@@ -419,10 +434,10 @@
                         </LinearLayout>
 
                         <TextView
-                            android:id="@+id/tvLimitAccess"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:layout_marginTop="4dp"
+                            android:layout_marginTop="8dp"
+                            android:text="Lifting the limit to 1.0 reproduces Android 11 behaviour: pass-through overlays are drawn at the requested alpha and taps still reach the app underneath. The setting is device-wide, persists across reboots and applies immediately. Grant write access once with adb (pm grant com.tapjacker.ng android.permission.WRITE_SECURE_SETTINGS) or use a rooted device."
                             android:textAppearance="?attr/textAppearanceBodySmall" />
                     </LinearLayout>
                 </LinearLayout>

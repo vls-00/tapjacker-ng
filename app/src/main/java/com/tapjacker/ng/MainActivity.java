@@ -315,7 +315,7 @@ public class MainActivity extends AppCompatActivity implements OverlayService.Li
         groupPartial.setVisibility(cfg.mode == OverlayConfig.Mode.PARTIAL ? View.VISIBLE : View.GONE);
         if (overLimit()) {
             tvPassthroughHint.setText(String.format(Locale.ROOT,
-                    "Above the %.2f system limit, so the overlay is drawn opaque and touches WILL NOT go through. Long-press it to dismiss.",
+                    "Above the %.2f system limit: the overlay is drawn at full opacity and touches WILL NOT go through. Long-press the overlay to dismiss it.",
                     maxObscuringOpacity));
         } else if (cfg.passthrough) {
             tvPassthroughHint.setText("FLAG_NOT_TOUCHABLE: taps go to whatever is underneath. Stop the overlay from the notification or from here.");
@@ -338,18 +338,18 @@ public class MainActivity extends AppCompatActivity implements OverlayService.Li
         int normal = tvOpacityValue.getCurrentTextColor();
         int warn = ContextCompat.getColor(this, R.color.warning);
         if (!cfg.passthrough) {
-            tvOpacityWarning.setText("Nothing gets through in capture mode, so any opacity goes.");
+            tvOpacityWarning.setText("Capture mode: no touches reach the app underneath, so any opacity is permitted.");
             tvOpacityWarning.setTextColor(normal);
         } else if (!TouchFilter.exists()) {
             tvOpacityWarning.setText(String.format(Locale.ROOT,
-                    "Android %s has no untrusted-touch filter: a fully opaque pass-through overlay works.", Build.VERSION.RELEASE));
+                    "Android %s has no untrusted-touch filter: pass-through overlays may be fully opaque and taps still reach the app underneath.", Build.VERSION.RELEASE));
             tvOpacityWarning.setTextColor(normal);
         } else if (!limitEnforced()) {
-            tvOpacityWarning.setText("System limit lifted: pass-through overlays are drawn at the requested alpha, 1.0 included.");
+            tvOpacityWarning.setText("System limit lifted: pass-through overlays are drawn at the requested alpha, including 1.0, and taps reach the app underneath.");
             tvOpacityWarning.setTextColor(warn);
         } else if (overLimit()) {
             tvOpacityWarning.setText(String.format(Locale.ROOT,
-                    "Above the %.2f limit: drawn at %.2f, but touches WILL NOT go through. Lift the limit for opaque pass-through.",
+                    "Above the %.2f limit: the overlay is drawn at %.2f but touches WILL NOT go through. Lift the system limit below to combine full opacity with pass-through.",
                     maxObscuringOpacity, cfg.opacity));
             tvOpacityWarning.setTextColor(warn);
         } else {
