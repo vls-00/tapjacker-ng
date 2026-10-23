@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.graphics.drawable.Drawable;
+import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
 import android.text.Editable;
@@ -104,7 +105,9 @@ public final class AppPickerDialog {
         Handler main = new Handler(Looper.getMainLooper());
         Executors.newSingleThreadExecutor().execute(() -> {
             Intent launcher = new Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER);
-            List<ResolveInfo> ris = pm.queryIntentActivities(launcher, PackageManager.ResolveInfoFlags.of(0));
+            List<ResolveInfo> ris = Build.VERSION.SDK_INT >= 33
+                    ? pm.queryIntentActivities(launcher, PackageManager.ResolveInfoFlags.of(0))
+                    : pm.queryIntentActivities(launcher, 0);
             List<AppEntry> found = new ArrayList<>();
             for (ResolveInfo ri : ris) {
                 String pkg = ri.activityInfo.packageName;

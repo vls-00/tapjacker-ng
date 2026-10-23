@@ -12,11 +12,23 @@
                 android:endX="108"
                 android:endY="0"
                 android:type="linear">
-                <item android:offset="0" android:color="#FF0B1F2E" />
-                <item android:offset="0.55" android:color="#FF0E3B4A" />
-                <item android:offset="1" android:color="#FF008F7A" />
+                <item android:offset="0" android:color="#FF07050B" />
+                <item android:offset="0.5" android:color="#FF1E0712" />
+                <item android:offset="1" android:color="#FF6B0F1F" />
             </gradient>
         </aapt:attr>
     </path>
-    <path android:fillColor="#FFFFFFFF" android:fillAlpha="0.04" android:pathData="M10,54 a44,44 0 1 0 88,0 a44,44 0 1 0 -88,0" />
+    <!-- faint red glow behind the mark -->
+    <path android:pathData="M18,54 a36,36 0 1 0 72,0 a36,36 0 1 0 -72,0">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:type="radial"
+                android:centerX="54"
+                android:centerY="54"
+                android:gradientRadius="36">
+                <item android:offset="0" android:color="#55FF2D4A" />
+                <item android:offset="1" android:color="#00FF2D4A" />
+            </gradient>
+        </aapt:attr>
+    </path>
 </vector>

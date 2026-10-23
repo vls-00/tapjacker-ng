@@ -9,6 +9,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ServiceInfo;
 import android.graphics.PixelFormat;
+import android.os.Build;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
@@ -95,7 +96,11 @@ public class OverlayService extends Service {
         cfg = parsed;
 
         if (ACTION_SHOW.equals(action)) {
-            startForeground(NOTIFICATION_ID, buildNotification(), ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE);
+            if (Build.VERSION.SDK_INT >= 34) {
+                startForeground(NOTIFICATION_ID, buildNotification(), ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE);
+            } else {
+                startForeground(NOTIFICATION_ID, buildNotification());
+            }
             setRunning(true);
             handler.removeCallbacks(showRunnable);
             detach();
@@ -173,8 +178,12 @@ public class OverlayService extends Service {
         lp.x = full ? 0 : OverlayRenderer.dp(this, c.partialXDp);
         lp.y = full ? 0 : OverlayRenderer.dp(this, c.partialYDp);
         lp.alpha = c.opacity;
-        lp.layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS;
-        lp.setFitInsetsTypes(0);
+        if (Build.VERSION.SDK_INT >= 30) {
+            lp.layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS;
+            lp.setFitInsetsTypes(0);
+        } else if (Build.VERSION.SDK_INT >= 28) {
+            lp.layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES;
+        }
         lp.setTitle("tapjacker-ng");
         return lp;
     }

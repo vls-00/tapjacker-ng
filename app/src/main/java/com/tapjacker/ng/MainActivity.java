@@ -7,9 +7,9 @@ import android.content.ClipboardManager;
 import android.content.ComponentName;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.database.ContentObserver;
 import android.graphics.Rect;
 import android.graphics.Typeface;
-import android.hardware.input.InputManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -22,12 +22,14 @@ import android.text.TextWatcher;
 import android.text.style.ForegroundColorSpan;
 import android.text.style.RelativeSizeSpan;
 import android.text.style.StyleSpan;
+import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.LinearLayout;
 import android.widget.RadioGroup;
 import android.widget.TextView;
+import android.widget.ScrollView;
 import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
@@ -55,13 +57,23 @@ public class MainActivity extends AppCompatActivity implements OverlayService.Li
     private OverlayConfig cfg;
     private boolean binding;
     private int screenWdp, screenHdp;
-    private float maxObscuringOpacity = 0.8f;
+    private float maxObscuringOpacity = 1.0f;
+    private float dragStartOpacity;
     private final Handler handler = new Handler(Looper.getMainLooper());
+    // the limit can change under us (adb, root, the buttons below)
+    private final ContentObserver limitObserver = new ContentObserver(new Handler(Looper.getMainLooper())) {
+        @Override
+        public void onChange(boolean selfChange) {
+            refreshLimit();
+        }
+    };
     private final Runnable pushToService = () -> {
         if (OverlayService.isRunning()) startService(OverlayService.updateIntent(this, cfg));
     };
 
     private TextView tvSystemInfo, tvOverlayPerm, tvRunningStatus, tvPassthroughHint, tvOpacityValue, tvOpacityWarning;
+    private TextView tvLimitStatus, tvLimitAccess;
+    private View groupLimit, btnLiftLimit, btnRestoreLimit;
     private TextView tvWidth, tvHeight, tvX, tvY, tvCorner, tvBgColorHex, tvNoElements, tvTargetApp, tvDelay, tvDismiss;
     private View btnGrantOverlay, btnStart, btnStop, groupPartial, swBgColor, rowApp, tilComponent;
     private MaterialButtonToggleGroup toggleMode;
@@ -83,19 +95,27 @@ public class MainActivity extends AppCompatActivity implements OverlayService.Li
         store = new ConfigStore(this);
         cfg = store.loadCurrent();
 
-        WindowManager wm = getSystemService(WindowManager.class);
-        Rect bounds = wm.getMaximumWindowMetrics().getBounds();
+        Rect bounds = screenBounds();
         float density = getResources().getDisplayMetrics().density;
         screenWdp = Math.round(bounds.width() / density);
         screenHdp = Math.round(bounds.height() / density);
-        InputManager im = getSystemService(InputManager.class);
-        if (im != null) maxObscuringOpacity = im.getMaximumObscuringOpacityForTouch();
+        maxObscuringOpacity = TouchFilter.limit(this);
 
         findViews();
         applyInsets();
         preview.setScreenSize(bounds.width(), bounds.height());
         wire();
         bindAll();
+    }
+
+    // full display size including the bars; WindowMetrics is API 30
+    @SuppressWarnings("deprecation")
+    private Rect screenBounds() {
+        WindowManager wm = getSystemService(WindowManager.class);
+        if (Build.VERSION.SDK_INT >= 30) return wm.getMaximumWindowMetrics().getBounds();
+        android.graphics.Point p = new android.graphics.Point();
+        wm.getDefaultDisplay().getRealSize(p);
+        return new Rect(0, 0, p.x, p.y);
     }
 
     // header extends under the status bar, list gets room above the nav bar
@@ -119,6 +139,11 @@ public class MainActivity extends AppCompatActivity implements OverlayService.Li
         tvPassthroughHint = findViewById(R.id.tvPassthroughHint);
         tvOpacityValue = findViewById(R.id.tvOpacityValue);
         tvOpacityWarning = findViewById(R.id.tvOpacityWarning);
+        tvLimitStatus = findViewById(R.id.tvLimitStatus);
+        tvLimitAccess = findViewById(R.id.tvLimitAccess);
+        groupLimit = findViewById(R.id.groupLimit);
+        btnLiftLimit = findViewById(R.id.btnLiftLimit);
+        btnRestoreLimit = findViewById(R.id.btnRestoreLimit);
         tvWidth = findViewById(R.id.tvWidth);
         tvHeight = findViewById(R.id.tvHeight);
         tvX = findViewById(R.id.tvX);
@@ -153,9 +178,10 @@ public class MainActivity extends AppCompatActivity implements OverlayService.Li
     }
 
     private void wire() {
-        tvSystemInfo.setText(String.format(Locale.ROOT,
-                "Android %s (API %d) · %d×%d dp · max obscuring opacity for touch: %.2f",
-                Build.VERSION.RELEASE, Build.VERSION.SDK_INT, screenWdp, screenHdp, maxObscuringOpacity));
+        bindSystemInfo();
+        groupLimit.setVisibility(TouchFilter.exists() ? View.VISIBLE : View.GONE);
+        btnLiftLimit.setOnClickListener(v -> changeLimit(1.0f));
+        btnRestoreLimit.setOnClickListener(v -> changeLimit(-1f));
 
         btnGrantOverlay.setOnClickListener(v -> openOverlaySettings());
         btnStart.setOnClickListener(v -> startOverlay());
@@ -173,6 +199,7 @@ public class MainActivity extends AppCompatActivity implements OverlayService.Li
             bindMode();
             bindOpacity();
             onChanged();
+            if (checked && overLimit()) showOverLimitDialog();
         });
 
         sliderWidth.setValueTo(Math.max(41, screenWdp));
@@ -193,6 +220,18 @@ public class MainActivity extends AppCompatActivity implements OverlayService.Li
             cfg.opacity = OverlayConfig.clampOpacity(value);
             bindOpacity();
             onChanged();
+        });
+        // warn once per crossing, when the finger lifts, not on every step of the drag
+        sliderOpacity.addOnSliderTouchListener(new Slider.OnSliderTouchListener() {
+            @Override
+            public void onStartTrackingTouch(Slider slider) {
+                dragStartOpacity = cfg.opacity;
+            }
+
+            @Override
+            public void onStopTrackingTouch(Slider slider) {
+                if (overLimit() && dragStartOpacity <= maxObscuringOpacity + 0.001f) showOverLimitDialog();
+            }
         });
 
         findViewById(R.id.rowBgColor).setOnClickListener(v -> ColorPickerDialog.show(this, "Overlay background", cfg.bgColor, c -> {
@@ -297,25 +336,135 @@ public class MainActivity extends AppCompatActivity implements OverlayService.Li
         }
     }
 
+    private boolean limitEnforced() {
+        return TouchFilter.exists() && maxObscuringOpacity < 1.0f - 0.001f;
+    }
+
+    private boolean overLimit() {
+        return cfg.passthrough && limitEnforced() && cfg.opacity > maxObscuringOpacity + 0.001f;
+    }
+
     private void bindOpacity() {
         float effective = cfg.passthrough ? Math.min(cfg.opacity, maxObscuringOpacity) : cfg.opacity;
         tvOpacityValue.setText(String.format(Locale.ROOT, "Window alpha: %.2f (%d%%)%s", cfg.opacity, Math.round(cfg.opacity * 100),
-                effective < cfg.opacity ? String.format(Locale.ROOT, " · drawn at %.2f", effective) : ""));
+                effective < cfg.opacity - 0.001f ? String.format(Locale.ROOT, " · drawn at %.2f", effective) : ""));
         int normal = tvOpacityValue.getCurrentTextColor();
+        int warn = ContextCompat.getColor(this, R.color.warning);
         if (!cfg.passthrough) {
             tvOpacityWarning.setText("Nothing gets through in capture mode, so any opacity goes. Fully opaque is fine.");
             tvOpacityWarning.setTextColor(normal);
-        } else if (cfg.opacity > maxObscuringOpacity + 0.001f) {
+        } else if (!TouchFilter.exists()) {
             tvOpacityWarning.setText(String.format(Locale.ROOT,
-                    "Over the %.2f limit. Android 12+ draws pass-through overlays from other apps at %.2f at most, so this one will look like %.2f and taps still get through. Stack a second overlay and the combined opacity crosses the limit, at which point the system drops the taps.",
-                    maxObscuringOpacity, maxObscuringOpacity, maxObscuringOpacity));
-            tvOpacityWarning.setTextColor(ContextCompat.getColor(this, R.color.warning));
+                    "Android %s has no untrusted-touch filter: a pass-through overlay can be fully opaque and taps still land on the app underneath. Views with filterTouchesWhenObscured are the only defence.",
+                    Build.VERSION.RELEASE));
+            tvOpacityWarning.setTextColor(normal);
+        } else if (!limitEnforced()) {
+            tvOpacityWarning.setText("The system limit is lifted on this device, so pass-through overlays are drawn at the requested alpha, 1.0 included. Taps still arrive with FLAG_WINDOW_IS_OBSCURED; filterTouchesWhenObscured views reject them.");
+            tvOpacityWarning.setTextColor(warn);
+        } else if (overLimit()) {
+            tvOpacityWarning.setText(String.format(Locale.ROOT,
+                    "Over the %.2f limit. Android 12+ draws pass-through overlays from other apps at %.2f at most, so this one will look like %.2f and taps still get through. Lift the limit below to get the real %.2f.",
+                    maxObscuringOpacity, maxObscuringOpacity, maxObscuringOpacity, cfg.opacity));
+            tvOpacityWarning.setTextColor(warn);
         } else {
             tvOpacityWarning.setText(String.format(Locale.ROOT,
                     "Within the %.2f limit: taps reach the app underneath, flagged FLAG_WINDOW_IS_OBSCURED. Views with filterTouchesWhenObscured still reject them.",
                     maxObscuringOpacity));
             tvOpacityWarning.setTextColor(normal);
         }
+        bindLimit();
+    }
+
+    private void bindLimit() {
+        if (!TouchFilter.exists()) return;
+        tvLimitStatus.setText(TouchFilter.status(this));
+        tvLimitAccess.setText(TouchFilter.writeAccess(this));
+        btnLiftLimit.setEnabled(limitEnforced());
+        btnRestoreLimit.setEnabled(!TouchFilter.isDefault(this));
+    }
+
+    private void bindSystemInfo() {
+        String limit = TouchFilter.exists()
+                ? String.format(Locale.ROOT, "max obscuring opacity for touch: %.2f", maxObscuringOpacity)
+                : "no untrusted-touch filter (pre-Android 12)";
+        tvSystemInfo.setText(String.format(Locale.ROOT, "Android %s (API %d) · %d×%d dp · %s",
+                Build.VERSION.RELEASE, Build.VERSION.SDK_INT, screenWdp, screenHdp, limit));
+    }
+
+    private void refreshLimit() {
+        float before = maxObscuringOpacity;
+        maxObscuringOpacity = TouchFilter.limit(this);
+        bindSystemInfo();
+        bindOpacity();
+        if (Math.abs(before - maxObscuringOpacity) > 0.001f && OverlayService.isRunning()) {
+            // the window manager re-evaluates the cap on the next layout, so push the config again
+            startService(OverlayService.updateIntent(this, cfg));
+        }
+    }
+
+    private void showOverLimitDialog() {
+        float limit = maxObscuringOpacity;
+        new MaterialAlertDialogBuilder(this)
+                .setTitle(String.format(Locale.ROOT, "Above the %.2f system limit", limit))
+                .setMessage(String.format(Locale.ROOT,
+                        "You asked for %.2f. Android %s caps pass-through overlays from other apps at %.2f: the window manager will draw this one at %.2f whatever you request, and taps keep going through.\n\n"
+                        + "Keeping %.2f is harmless, it just won't look any different on this device. To get a truly opaque pass-through overlay, like Android 11 and older, lift the system limit. That needs WRITE_SECURE_SETTINGS (one adb command) or root.",
+                        cfg.opacity, Build.VERSION.RELEASE, limit, limit, cfg.opacity))
+                .setPositiveButton(String.format(Locale.ROOT, "Keep %.2f", cfg.opacity), null)
+                .setNegativeButton(String.format(Locale.ROOT, "Back to %.2f", limit), (d, w) -> {
+                    cfg.opacity = OverlayConfig.clampOpacity(limit);
+                    binding = true;
+                    sliderOpacity.setValue(cfg.opacity);
+                    binding = false;
+                    bindOpacity();
+                    onChanged();
+                })
+                .setNeutralButton("Lift limit", (d, w) -> changeLimit(1.0f))
+                .show();
+    }
+
+    // value < 0 deletes the key (stock default)
+    private void changeLimit(float value) {
+        btnLiftLimit.setEnabled(false);
+        btnRestoreLimit.setEnabled(false);
+        TouchFilter.setLimit(this, value, (result, now) -> {
+            refreshLimit();
+            switch (result) {
+                case DIRECT:
+                    Toast.makeText(this, String.format(Locale.ROOT, "Limit is now %.2f (WRITE_SECURE_SETTINGS)", now), Toast.LENGTH_LONG).show();
+                    break;
+                case ROOT:
+                    Toast.makeText(this, String.format(Locale.ROOT, "Limit is now %.2f (root)", now), Toast.LENGTH_LONG).show();
+                    break;
+                default:
+                    showAdbCommands(value);
+                    break;
+            }
+        });
+    }
+
+    private void showAdbCommands(float value) {
+        String cmds = TouchFilter.adbCommands(value);
+        TextView tv = new TextView(this);
+        tv.setText(cmds);
+        tv.setTypeface(Typeface.MONOSPACE);
+        tv.setTextSize(TypedValue.COMPLEX_UNIT_SP, 12);
+        tv.setTextIsSelectable(true);
+        int pad = OverlayRenderer.dp(this, 24);
+        tv.setPadding(pad, OverlayRenderer.dp(this, 8), pad, 0);
+        ScrollView sv = new ScrollView(this);
+        sv.addView(tv);
+        new MaterialAlertDialogBuilder(this)
+                .setTitle("Can't change it from here")
+                .setMessage("This app has no WRITE_SECURE_SETTINGS and no root. Run this from a host with adb (works on any device, no root), then come back:")
+                .setView(sv)
+                .setPositiveButton("Copy commands", (d, w) -> {
+                    ClipboardManager cm = getSystemService(ClipboardManager.class);
+                    cm.setPrimaryClip(ClipData.newPlainText("tapjacker-adb", cmds));
+                    Toast.makeText(this, "Copied", Toast.LENGTH_SHORT).show();
+                })
+                .setNegativeButton("Close", null)
+                .show();
     }
 
     private void bindBg() {
@@ -417,8 +566,8 @@ public class MainActivity extends AppCompatActivity implements OverlayService.Li
     }
 
     private void launchNow() {
-        if (cfg.passthrough && cfg.opacity > maxObscuringOpacity + 0.001f) {
-            Toast.makeText(this, String.format(Locale.ROOT, "Pass-through overlays are capped at %.2f, drawing at that", maxObscuringOpacity), Toast.LENGTH_LONG).show();
+        if (overLimit()) {
+            Toast.makeText(this, String.format(Locale.ROOT, "Above the %.2f system limit: drawn at %.2f, taps still pass", maxObscuringOpacity, maxObscuringOpacity), Toast.LENGTH_LONG).show();
         }
         startForegroundService(OverlayService.showIntent(this, cfg));
         launchTarget();
@@ -495,8 +644,7 @@ public class MainActivity extends AppCompatActivity implements OverlayService.Li
     }
 
     private void showPresets() {
-        Rect screen = getSystemService(WindowManager.class).getMaximumWindowMetrics().getBounds();
-        PresetsDialog.show(this, store, cfg, screen, loaded -> {
+        PresetsDialog.show(this, store, cfg, screenBounds(), loaded -> {
             cfg = loaded;
             bindAll();
             onChanged();
@@ -526,10 +674,18 @@ public class MainActivity extends AppCompatActivity implements OverlayService.Li
         super.onResume();
         OverlayService.setListener(this);
         refreshStatus();
+        refreshLimit();
+        if (TouchFilter.exists()) {
+            getContentResolver().registerContentObserver(
+                    Settings.Global.getUriFor(TouchFilter.KEY_MAX_OPACITY), false, limitObserver);
+            getContentResolver().registerContentObserver(
+                    Settings.Global.getUriFor(TouchFilter.KEY_BLOCK_MODE), false, limitObserver);
+        }
     }
 
     @Override
     protected void onPause() {
+        if (TouchFilter.exists()) getContentResolver().unregisterContentObserver(limitObserver);
         OverlayService.setListener(null);
         super.onPause();
     }
