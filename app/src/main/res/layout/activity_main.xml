@@ -402,13 +402,6 @@
                             android:fontFamily="monospace"
                             android:textAppearance="?attr/textAppearanceBodySmall" />
 
-                        <TextView
-                            android:id="@+id/tvLimitAccess"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="4dp"
-                            android:textAppearance="?attr/textAppearanceBodySmall" />
-
                         <LinearLayout
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
@@ -437,7 +430,7 @@
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="8dp"
-                            android:text="Lifting the limit to 1.0 reproduces Android 11 behaviour: pass-through overlays are drawn at the requested alpha and taps still reach the app underneath. The setting is device-wide, persists across reboots and applies immediately. Grant write access once with adb (pm grant com.tapjacker.ng android.permission.WRITE_SECURE_SETTINGS) or use a rooted device."
+                            android:text="Lifting the limit to 1.0 reproduces Android 11 behaviour: opaque pass-through overlays, taps still reach the app underneath. Needs WRITE_SECURE_SETTINGS (adb pm grant) or root."
                             android:textAppearance="?attr/textAppearanceBodySmall" />
                     </LinearLayout>
                 </LinearLayout>
@@ -601,18 +594,6 @@
                         android:orientation="vertical">
 
                         <RadioButton
-                            android:id="@+id/rbTargetNone"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:text="Nothing, just show the overlay" />
-
-                        <RadioButton
-                            android:id="@+id/rbTargetBuiltin"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:text="Built-in test screen (counts taps that get through)" />
-
-                        <RadioButton
                             android:id="@+id/rbTargetApp"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
@@ -623,6 +604,18 @@
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:text="Explicit activity (package/.Activity)" />
+
+                        <RadioButton
+                            android:id="@+id/rbTargetNone"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="Nothing, just show the overlay" />
+
+                        <RadioButton
+                            android:id="@+id/rbTargetBuiltin"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="Built-in test screen (counts taps that get through)" />
                     </RadioGroup>
 
                     <LinearLayout

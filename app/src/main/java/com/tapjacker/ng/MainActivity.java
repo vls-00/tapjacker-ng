@@ -71,7 +71,7 @@ public class MainActivity extends AppCompatActivity implements OverlayService.Li
     };
 
     private TextView tvSystemInfo, tvOverlayPerm, tvRunningStatus, tvPassthroughHint, tvOpacityValue, tvOpacityWarning;
-    private TextView tvLimitStatus, tvLimitAccess;
+    private TextView tvLimitStatus;
     private View groupLimit, btnLiftLimit, btnRestoreLimit;
     private TextView tvWidth, tvHeight, tvX, tvY, tvCorner, tvBgColorHex, tvNoElements, tvTargetApp, tvDelay, tvDismiss;
     private View btnGrantOverlay, btnStart, btnStop, groupPartial, swBgColor, rowApp, tilComponent;
@@ -139,7 +139,6 @@ public class MainActivity extends AppCompatActivity implements OverlayService.Li
         tvOpacityValue = findViewById(R.id.tvOpacityValue);
         tvOpacityWarning = findViewById(R.id.tvOpacityWarning);
         tvLimitStatus = findViewById(R.id.tvLimitStatus);
-        tvLimitAccess = findViewById(R.id.tvLimitAccess);
         groupLimit = findViewById(R.id.groupLimit);
         btnLiftLimit = findViewById(R.id.btnLiftLimit);
         btnRestoreLimit = findViewById(R.id.btnRestoreLimit);
@@ -363,7 +362,6 @@ public class MainActivity extends AppCompatActivity implements OverlayService.Li
     private void bindLimit() {
         if (!TouchFilter.exists()) return;
         tvLimitStatus.setText(TouchFilter.status(this));
-        tvLimitAccess.setText(TouchFilter.writeAccess(this));
         btnLiftLimit.setEnabled(limitEnforced());
         btnRestoreLimit.setEnabled(!TouchFilter.isDefault(this));
     }

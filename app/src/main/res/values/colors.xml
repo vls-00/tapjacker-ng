@@ -2,19 +2,19 @@
 <resources>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
-    <!-- deep violet palette, matches the launcher icon background; red stays reserved for the icon accents and warnings stay orange -->
-    <color name="brand_primary">#FF5B3FC4</color>
-    <color name="brand_primary_light">#FFC8B6FF</color>
-    <color name="brand_primary_container">#FFE8DEFF</color>
-    <color name="brand_on_primary_container">#FF1E0A5E</color>
-    <color name="brand_secondary">#FF615A78</color>
+    <!-- teal palette; the launcher icon background uses the same gradient, red is reserved for the icon accents -->
+    <color name="brand_primary">#FF006B5F</color>
+    <color name="brand_primary_light">#FF55DBC6</color>
+    <color name="brand_primary_container">#FF74F8E2</color>
+    <color name="brand_on_primary_container">#FF00201C</color>
+    <color name="brand_secondary">#FF4A635F</color>
     <color name="brand_error">#FFBA1A1A</color>
     <color name="brand_error_light">#FFFFB4AB</color>
     <color name="preview_phone_bg">#FF9E9E9E</color>
     <color name="warning">#FFE65100</color>
     <color name="dim_text">#FF757575</color>
     <color name="header_subtitle">#B3FFFFFF</color>
-    <color name="header_start">#FF0B0714</color>
-    <color name="header_mid">#FF1E1238</color>
-    <color name="header_end">#FF4A2A8C</color>
+    <color name="header_start">#FF0B1F2E</color>
+    <color name="header_mid">#FF0E3B4A</color>
+    <color name="header_end">#FF007A6B</color>
 </resources>
