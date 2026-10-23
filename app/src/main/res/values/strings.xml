@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">Tapjacker NG</string>
+    <string name="test_target_title">Test target</string>
+    <string name="notif_channel">Overlay status</string>
+</resources>

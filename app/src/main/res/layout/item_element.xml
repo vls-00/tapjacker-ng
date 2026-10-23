@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="?attr/selectableItemBackground"
+    android:gravity="center_vertical"
+    android:orientation="horizontal"
+    android:paddingTop="6dp"
+    android:paddingBottom="6dp"
+    tools:ignore="ContentDescription,HardcodedText">
+
+    <View
+        android:id="@+id/swatch"
+        android:layout_width="28dp"
+        android:layout_height="28dp"
+        android:layout_marginEnd="12dp" />
+
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/tvTitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:textAppearance="?attr/textAppearanceBodyLarge" />
+
+        <TextView
+            android:id="@+id/tvSubtitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:textAppearance="?attr/textAppearanceBodySmall" />
+    </LinearLayout>
+
+    <Button
+        android:id="@+id/btnUp"
+        style="?attr/materialIconButtonStyle"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:contentDescription="Move up"
+        app:icon="@drawable/ic_arrow_up" />
+
+    <Button
+        android:id="@+id/btnDown"
+        style="?attr/materialIconButtonStyle"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:contentDescription="Move down"
+        app:icon="@drawable/ic_arrow_down" />
+
+    <Button
+        android:id="@+id/btnDelete"
+        style="?attr/materialIconButtonStyle"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:contentDescription="Delete"
+        app:icon="@drawable/ic_delete" />
+</LinearLayout>

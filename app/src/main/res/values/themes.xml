@@ -1,0 +1,11 @@
+<resources>
+    <style name="Theme.Tapjackerng" parent="Theme.Material3.DayNight.NoActionBar">
+        <item name="colorPrimary">@color/brand_primary</item>
+        <item name="colorOnPrimary">@color/white</item>
+        <item name="colorPrimaryContainer">@color/brand_primary_container</item>
+        <item name="colorOnPrimaryContainer">@color/brand_on_primary_container</item>
+        <item name="colorSecondary">@color/brand_secondary</item>
+        <item name="colorError">@color/brand_error</item>
+        <item name="android:windowLightStatusBar">false</item>
+    </style>
+</resources>
