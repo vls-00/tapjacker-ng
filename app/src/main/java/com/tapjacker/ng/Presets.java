@@ -83,88 +83,97 @@ public final class Presets {
     private static final int GREY = 0xFF616161;
     private static final int BLUE = 0xFF2962FF;
     private static final int GREEN = 0xFF00C853;
-    private static final int RED = 0xFFD50000;
+    private static final int RED = 0xFFD32F2F;
 
+    /** Reference phone used when no screen size is known (default config only). */
     public static List<Preset> builtIn() {
+        return builtIn(411, 914);
+    }
+
+    /**
+     * Templates laid out for the given screen so that the bait lands on the screen centre,
+     * which is where the preview's mock target sits. Slide or drag from there.
+     */
+    public static List<Preset> builtIn(int screenWdp, int screenHdp) {
+        int cx = screenWdp / 2;
+        int cy = screenHdp / 2;
         List<Preset> list = new ArrayList<>();
         OverlayConfig c;
 
-        // full-screen "you won" bait
+        // full-screen "you won" bait, button on the centre
         c = full(0xFF1B2A41, 0.75f);
-        c.elements.add(text("🎉 You won a prize!", WHITE, 28, true, OverlayElement.Anchor.CENTER, 0, -140));
-        c.elements.add(text("Tap the button below to claim it", 0xFFB0BEC5, 16, false, OverlayElement.Anchor.CENTER, 0, -80));
-        c.elements.add(button("CLAIM PRIZE", GREEN, WHITE, 220, 56, OverlayElement.Anchor.CENTER, 0, 40));
-        list.add(new Preset("Prize game", "Full screen, bait button in the middle.", c));
+        c.elements.add(text("🎉 You won a prize!", WHITE, 28, true, OverlayElement.Anchor.CENTER, 0, -130));
+        c.elements.add(text("Tap the button below to claim it", 0xFFB0BEC5, 16, false, OverlayElement.Anchor.CENTER, 0, -72));
+        c.elements.add(button("CLAIM PRIZE", GREEN, WHITE, 220, 56, OverlayElement.Anchor.CENTER, 0, 0));
+        list.add(new Preset("Prize game", "Full screen, bait button in the centre.", c));
 
-        // fake system dialog
-        c = partial(WHITE, 0.8f, 320, 200, 20, 300, 24);
-        c.elements.add(text("System update available", INK, 20, true, OverlayElement.Anchor.TOP_LEFT, 12, 12));
-        c.elements.add(text("A security patch is ready to install.", GREY, 15, false, OverlayElement.Anchor.TOP_LEFT, 12, 60));
-        c.elements.add(button("INSTALL", BLUE, WHITE, 120, 44, OverlayElement.Anchor.BOTTOM_RIGHT, -16, -16));
-        c.elements.add(text("LATER", BLUE, 15, true, OverlayElement.Anchor.BOTTOM_RIGHT, -150, -16));
-        list.add(new Preset("Fake system dialog", "Partial overlay dressed up as a dialog. Line it up over the target's button.", c));
+        // system dialog with a single full-width action over the target
+        int dw = Math.min(340, screenWdp - 24);
+        c = partial(WHITE, 0.85f, dw, 220, cx - dw / 2, cy - 148, 24);
+        c.elements.add(text("System update available", INK, 20, true, OverlayElement.Anchor.TOP_LEFT, 8, 8));
+        c.elements.add(text("A security patch is ready to install.\nYour data will not be affected.", GREY, 15, false, OverlayElement.Anchor.TOP_LEFT, 8, 52));
+        c.elements.add(button("Install now", BLUE, WHITE, dw - 40, 48, OverlayElement.Anchor.BOTTOM_CENTER, 0, -48));
+        c.elements.add(text("Remind me later", BLUE, 14, true, OverlayElement.Anchor.BOTTOM_CENTER, 0, -4));
+        list.add(new Preset("Fake system dialog", "Dialog with one wide action button. Drag it so the button sits on the target.", c));
 
-        // fake runtime permission prompt
-        c = partial(WHITE, 0.8f, 340, 190, 10, 560, 28);
-        c.elements.add(box(0xFFE3F2FD, 40, 40, 20, OverlayElement.Anchor.TOP_CENTER, 0, 16));
-        c.elements.add(text("Allow Maps to access this\ndevice's location?", INK, 17, true, OverlayElement.Anchor.TOP_CENTER, 0, 64));
-        c.elements.add(button("While using the app", 0xFFE8EAF6, 0xFF1A237E, 300, 40, OverlayElement.Anchor.BOTTOM_CENTER, 0, -12));
-        list.add(new Preset("Permission prompt", "Looks like a runtime permission dialog, placed where the real one shows up.", c));
+        // runtime permission prompt with the three stock choices
+        c = partial(WHITE, 0.85f, dw, 300, cx - dw / 2, cy - 158, 28);
+        OverlayElement icon = box(0xFFE3F2FD, 40, 40, 20, OverlayElement.Anchor.TOP_CENTER, 0, 14);
+        icon.strokeWidthDp = 2;
+        icon.strokeColor = 0xFF90CAF9;
+        c.elements.add(icon);
+        c.elements.add(text("Allow Maps to access this\ndevice's location?", INK, 16, true, OverlayElement.Anchor.TOP_CENTER, 0, 56));
+        c.elements.add(button("While using the app", 0xFFE8EAF6, 0xFF1A237E, dw - 40, 44, OverlayElement.Anchor.TOP_CENTER, 0, 136));
+        c.elements.add(button("Only this time", 0xFFE8EAF6, 0xFF1A237E, dw - 40, 44, OverlayElement.Anchor.TOP_CENTER, 0, 188));
+        c.elements.add(button("Don't allow", 0xFFE8EAF6, 0xFF1A237E, dw - 40, 44, OverlayElement.Anchor.TOP_CENTER, 0, 240));
+        list.add(new Preset("Permission prompt", "Looks like the stock location prompt. The first option is the bait.", c));
 
-        // consent banner
-        c = partial(0xFF263238, 0.8f, 360, 160, 0, 600, 16);
-        c.elements.add(text("We use cookies to improve your experience.", WHITE, 15, false, OverlayElement.Anchor.TOP_LEFT, 16, 16));
-        c.elements.add(button("ACCEPT ALL", BLUE, WHITE, 160, 44, OverlayElement.Anchor.BOTTOM_LEFT, 16, -16));
-        list.add(new Preset("Consent banner", "Partial overlay sitting low on the screen.", c));
+        // cookie banner with a full-width accept button
+        int bw = Math.min(390, screenWdp - 20);
+        c = partial(0xFF263238, 0.85f, bw, 180, cx - bw / 2, cy - 142, 16);
+        c.elements.add(text("We use cookies to improve your experience\nand show relevant content.", WHITE, 15, false, OverlayElement.Anchor.TOP_LEFT, 4, 6));
+        c.elements.add(text("Manage options", 0xFFB0BEC5, 13, true, OverlayElement.Anchor.TOP_LEFT, 4, 70));
+        c.elements.add(button("Accept all", BLUE, WHITE, bw - 32, 44, OverlayElement.Anchor.BOTTOM_CENTER, 0, -16));
+        list.add(new Preset("Consent banner", "Cookie banner. The Accept button is the bait.", c));
 
-        // captcha
-        c = partial(WHITE, 0.8f, 320, 120, 20, 380, 8);
-        c.elements.add(box(0xFFFFFFFF, 28, 28, 4, OverlayElement.Anchor.CENTER_LEFT, 18, 0));
-        OverlayElement tick = box(0xFFFFFFFF, 28, 28, 4, OverlayElement.Anchor.CENTER_LEFT, 18, 0);
+        // captcha: the checkbox sits on the centre
+        c = partial(WHITE, 0.85f, 200, 100, cx - 32, cy - 50, 8);
+        OverlayElement tick = box(WHITE, 28, 28, 4, OverlayElement.Anchor.CENTER_LEFT, 18, 0);
         tick.strokeWidthDp = 2;
         tick.strokeColor = 0xFF9E9E9E;
         c.elements.add(tick);
-        c.elements.add(text("I'm not a robot", INK, 16, false, OverlayElement.Anchor.CENTER_LEFT, 60, 0));
-        c.elements.add(text("reCAPTCHA", 0xFF9E9E9E, 11, false, OverlayElement.Anchor.BOTTOM_RIGHT, -12, -8));
-        list.add(new Preset("Captcha check", "Checkbox-style bait. Put the checkbox over the target's control.", c));
+        c.elements.add(text("I'm not a robot", INK, 15, false, OverlayElement.Anchor.CENTER_LEFT, 46, 0));
+        c.elements.add(text("reCAPTCHA", 0xFF9E9E9E, 10, false, OverlayElement.Anchor.BOTTOM_RIGHT, -2, 0));
+        list.add(new Preset("Captcha check", "Checkbox-style bait. The checkbox is the part that goes over the control.", c));
 
-        // incoming call
-        c = full(0xFF102027, 0.75f);
-        c.elements.add(box(0xFF37474F, 96, 96, 48, OverlayElement.Anchor.TOP_CENTER, 0, 120));
-        c.elements.add(text("Unknown number", WHITE, 26, true, OverlayElement.Anchor.TOP_CENTER, 0, 236));
-        c.elements.add(text("Incoming call", 0xFFB0BEC5, 16, false, OverlayElement.Anchor.TOP_CENTER, 0, 276));
-        c.elements.add(button("Decline", RED, WHITE, 140, 56, OverlayElement.Anchor.BOTTOM_LEFT, 36, -80));
-        c.elements.add(button("Accept", GREEN, WHITE, 140, 56, OverlayElement.Anchor.BOTTOM_RIGHT, -36, -80));
-        list.add(new Preset("Incoming call", "Full screen with accept/decline buttons near the bottom.", c));
+        // incoming call, accept button in the centre
+        c = full(0xFF102027, 0.8f);
+        c.elements.add(box(0xFF37474F, 96, 96, 48, OverlayElement.Anchor.CENTER, 0, -230));
+        c.elements.add(text("Unknown number", WHITE, 26, true, OverlayElement.Anchor.CENTER, 0, -150));
+        c.elements.add(text("Incoming call", 0xFFB0BEC5, 16, false, OverlayElement.Anchor.CENTER, 0, -110));
+        c.elements.add(button("Accept", GREEN, WHITE, 220, 56, OverlayElement.Anchor.CENTER, 0, 0));
+        c.elements.add(button("Decline", RED, WHITE, 220, 56, OverlayElement.Anchor.CENTER, 0, 76));
+        list.add(new Preset("Incoming call", "Full screen; Accept sits on the centre, Decline below it.", c));
 
-        // loading screen
+        // loading screen that invites a tap anywhere
         c = full(0xFF0D0D0D, 0.8f);
-        c.elements.add(text("Loading…", WHITE, 24, true, OverlayElement.Anchor.CENTER, 0, -40));
-        c.elements.add(box(0xFF424242, 260, 8, 4, OverlayElement.Anchor.CENTER, 0, 10));
-        c.elements.add(box(0xFF2EE6A8, 170, 8, 4, OverlayElement.Anchor.CENTER, -45, 10));
-        c.elements.add(text("Tap anywhere to skip", 0xFF9E9E9E, 14, false, OverlayElement.Anchor.CENTER, 0, 50));
+        c.elements.add(text("Loading…", WHITE, 24, true, OverlayElement.Anchor.CENTER, 0, -70));
+        c.elements.add(box(0xFF424242, 260, 8, 4, OverlayElement.Anchor.CENTER, 0, -24));
+        c.elements.add(box(0xFF2EE6A8, 170, 8, 4, OverlayElement.Anchor.CENTER, -45, -24));
+        c.elements.add(text("Tap anywhere to continue", 0xFF9E9E9E, 14, false, OverlayElement.Anchor.CENTER, 0, 20));
         list.add(new Preset("Loading screen", "Dark full-screen loader that invites a tap anywhere.", c));
 
-        // update required
+        // update required, button in the centre
         c = full(0xFF1A237E, 0.8f);
-        c.elements.add(text("Update required", WHITE, 30, true, OverlayElement.Anchor.CENTER, 0, -120));
-        c.elements.add(text("This version is no longer supported.\nUpdate to keep using the app.", 0xFFC5CAE9, 16, false, OverlayElement.Anchor.CENTER, 0, -40));
-        c.elements.add(button("UPDATE NOW", WHITE, 0xFF1A237E, 240, 56, OverlayElement.Anchor.BOTTOM_CENTER, 0, -120));
-        list.add(new Preset("Update required", "Full-screen nag with a big button low on the screen.", c));
+        c.elements.add(text("Update required", WHITE, 30, true, OverlayElement.Anchor.CENTER, 0, -140));
+        c.elements.add(text("This version is no longer supported.\nUpdate to keep using the app.", 0xFFC5CAE9, 16, false, OverlayElement.Anchor.CENTER, 0, -70));
+        c.elements.add(button("UPDATE NOW", WHITE, 0xFF1A237E, 240, 56, OverlayElement.Anchor.CENTER, 0, 0));
+        list.add(new Preset("Update required", "Full-screen nag with the button in the centre.", c));
 
-        // button-sized bait
-        c = partial(0xFF00B0FF, 0.6f, 240, 56, 86, 520, 28);
+        // button-sized bait on the centre
+        c = partial(0xFF0288D1, 0.7f, 240, 56, cx - 120, cy - 28, 28);
         c.elements.add(text("Tap to continue", WHITE, 16, true, OverlayElement.Anchor.CENTER, 0, 0));
         list.add(new Preset("Button-sized bait", "Just a button. Drag or slide it over the control you want tapped.", c));
-
-        // near-invisible
-        c = full(0xFFFF0000, 0.1f);
-        c.elements.add(text("ghost overlay", WHITE, 14, false, OverlayElement.Anchor.TOP_CENTER, 0, 60));
-        list.add(new Preset("Ghost overlay", "Full screen at 10%. Barely visible, still counts as obscuring.", c));
-
-        // empty
-        c = full(0xFF000000, 0.75f);
-        list.add(new Preset("Blank canvas", "Empty full-screen overlay.", c));
 
         return list;
     }

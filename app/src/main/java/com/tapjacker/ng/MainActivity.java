@@ -569,7 +569,7 @@ public class MainActivity extends AppCompatActivity implements OverlayService.Li
     }
 
     private void showTemplates() {
-        List<Presets.Preset> list = Presets.builtIn();
+        List<Presets.Preset> list = Presets.builtIn(screenWdp, screenHdp);
         CharSequence[] items = new CharSequence[list.size()];
         int dim = ContextCompat.getColor(this, R.color.dim_text);
         for (int i = 0; i < items.length; i++) {

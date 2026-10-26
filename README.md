@@ -81,9 +81,10 @@ run settings.
 
 ### Templates and presets
 
-Eleven built-in templates: prize game, fake system dialog, permission prompt, consent banner,
-captcha check, incoming call, loading screen, update required, button-sized bait, ghost overlay,
-blank canvas. Loading a template keeps your target settings.
+Nine built-in templates: prize game, fake system dialog, permission prompt, consent banner,
+captcha check, incoming call, loading screen, update required, button-sized bait. Each is laid
+out for the current screen so the bait lands on the centre, where the preview's mock target sits.
+Loading a template keeps your target settings.
 
 Save your own presets under a name. The presets manager shows each with a thumbnail and a one-line
 summary (mode, opacity, element count, target). Tap to load, long-press to rename, bin to delete.

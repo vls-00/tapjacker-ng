@@ -56,7 +56,7 @@ public final class OverlayRenderer {
         tv.setTextColor(e.textColor);
         tv.setTextSize(TypedValue.COMPLEX_UNIT_SP, e.textSizeSp);
         tv.setTypeface(Typeface.DEFAULT, e.bold ? Typeface.BOLD : Typeface.NORMAL);
-        tv.setGravity(Gravity.CENTER);
+        tv.setGravity(textGravity(e));
         int pad = dp(ctx, e.paddingDp);
         tv.setPadding(pad, pad, pad, pad);
         tv.setBackground(shape(ctx, e));
@@ -65,6 +65,19 @@ public final class OverlayRenderer {
             tv.setAllCaps(false);
         }
         return tv;
+    }
+
+    // multi-line text follows its anchor: left anchors read left-aligned, right anchors right-aligned
+    private static int textGravity(OverlayElement e) {
+        if (e.type == OverlayElement.Type.BUTTON) return Gravity.CENTER;
+        switch (e.anchor) {
+            case TOP_LEFT: case CENTER_LEFT: case BOTTOM_LEFT:
+                return Gravity.START | Gravity.CENTER_VERTICAL;
+            case TOP_RIGHT: case CENTER_RIGHT: case BOTTOM_RIGHT:
+                return Gravity.END | Gravity.CENTER_VERTICAL;
+            default:
+                return Gravity.CENTER;
+        }
     }
 
     private static GradientDrawable shape(Context ctx, OverlayElement e) {
