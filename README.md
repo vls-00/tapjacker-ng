@@ -1,27 +1,34 @@
-# Tapjacker NG
+<p align="center">
+  <img src="app/src/main/res/icon.png" alt="App icon" width="120" />
+</p>
+<h1 align="center">Tapjacker NG</h1>
 
 
-A tapjacking proof-of-concept builder for Android 8.0 and newer, written for penetration tests.
+>[!warning]
+>**For educational purposes, developers and authorized testers only.** 
+> 
+> Use this tool
+> on apps you own or have explicit written permission to assess. Scanning or
+> attacking apps without authorization may be illegal. You are responsible for
+> how you use it.
+
+A tapjacking proof-of-concept builder for Android 8.0 and newer.
 
 This tool was built because every public tapjacking PoC out there was either a fixed
 overlay hard-coded for one target, or had simply stopped working: Android 12 introduced the
 untrusted-touch filter, Android 13 added runtime notification permission, Android 14 made
 foreground services declare a type, and most repositories were never updated past Android 10.
 
-This tool understands the current platform rules, lets you compose a
-convincing overlay on the device in minutes, launches the target app underneath it, proves whether
-taps get through, and exports the exact configuration for the report.
+This tool understands the current platform rules and lets you compose a
+convincing overlay on the device in minutes.
 
-Minimum SDK 26 (Android 8.0), target SDK 37. Tested on a Pixel 8a (Android 16), the API 37
-emulator and the API 30 (Android 11) emulator.
+<img src="https://img.shields.io/badge/Min%20SDK-26-3DDC84?logo=android&logoColor=white" alt="Min SDK 26" />
 
 ## Install
 
 1. Install the APK from the Releases page. Plug and Play. 
 2. On first start the app requests "Display over other apps".
 3. On Android 13+, grant notification access so the Stop action in the persistent notification is visible.
-
-*or Build from source with `./gradlew assembleDebug` (JDK 17+, Android SDK with platform 37).*
 
 ## Capabilities
 
@@ -65,14 +72,14 @@ emulator and the API 30 (Android 11) emulator.
   edges, centre) and an X/Y offset in dp.
 - Colour picker with swatches, hex entry (`#RGB`, `#RRGGBB`, `#AARRGGBB`) and a per-element alpha
   slider.
-- Reorder with the arrows, delete with the bin, tap a row to edit.
+- Reordering elements supported.
 
 ### Targets
 
 Launched underneath the overlay when you press Start:
 
 - Nothing, overlay only.
-- The built-in test screen, which counts the taps that get through.
+- Built-in test screen, which counts the taps that get through.
 - Any installed app, from a searchable list.
 - An explicit activity, entered as `package/.Activity`.
 
@@ -81,27 +88,11 @@ run settings.
 
 ### Templates and presets
 
-Nine built-in templates: prize game, fake system dialog, permission prompt, consent banner,
-captcha check, incoming call, loading screen, update required, button-sized bait. Each is laid
-out for the current screen so the bait lands on the centre, where the preview's mock target sits.
-Loading a template keeps your target settings.
+Nine pre-build templates: prize game, fake system dialog, permission prompt, consent banner,
+captcha check etc.
 
-Save your own presets under a name. The presets manager shows each with a thumbnail and a one-line
-summary (mode, opacity, element count, target). Tap to load, long-press to rename, bin to delete.
-The whole configuration can be copied to the clipboard as JSON for the report and pasted back on
-any device to reproduce the finding.
+Saving your own presets under a name and sharing the JSON with colleagues supported.
 
-### Live preview and live editing
-
-- The preview renders the overlay at real screen size over a mock app, scaled to fit.
-- While the overlay is running, every change in the app is pushed to it immediately.
-
-### Run card
-
-- Android version, API level, screen size in dp and the system opacity limit.
-- Overlay permission state with a shortcut to the settings page.
-- Start and Stop. A persistent notification carries a Stop action and returns to the app when
-  tapped.
 
 ## Platform behaviour
 
@@ -152,7 +143,7 @@ overlay at alpha 1.0 was rendered solid and every tap reached the activity below
 applies immediately without a reboot, persists across reboots until removed, and is device-wide,
 so restore it when the test is over.
 
-Three ways to set it:
+Two ways to set it:
 
 **1. adb, no root required.** The shell user may write global settings on every build, so this
 works on a stock, locked device with USB debugging enabled:
@@ -161,42 +152,20 @@ works on a stock, locked device with USB debugging enabled:
 adb shell settings put global maximum_obscuring_opacity_for_touch 1.0
 ```
 
-**2. From the app, after a one-time adb grant.** `WRITE_SECURE_SETTINGS` is a development
+**2. From inside the app, after a one-time adb grant.** `WRITE_SECURE_SETTINGS` is a development
 permission, so adb can grant it to the app once. The "Lift limit to 1.0" and "Restore default"
-buttons then work on their own, including on a device that is no longer connected:
+buttons then work on their own, including on a device that is no longer connected.
 
-```
-adb shell pm grant com.tapjacker.ng android.permission.WRITE_SECURE_SETTINGS
-```
+>[!note]
+>Restore the stock value with:
+>
+>```
+>adb shell settings delete global maximum_obscuring_opacity_for_touch
+>```
+>
+>or the "Restore default" button.
 
-**3. Root.** If `su` is available the buttons use it automatically:
-
-```
-su -c settings put global maximum_obscuring_opacity_for_touch 1.0
-```
-
-Without the permission or root, the buttons display the adb commands with a Copy button instead
-of failing silently. The Opacity card picks up the change live and, if an overlay is already
-running, re-applies it so the new cap takes effect without a restart.
-
-Restore the stock value with:
-
-```
-adb shell settings delete global maximum_obscuring_opacity_for_touch
-```
-
-or the "Restore default" button.
-
-A second setting controls what the dispatcher does when stacked overlays exceed the limit:
-
-```
-block_untrusted_touches   int: 0 = off, 1 = permissive (log only), 2 = block (default)
-adb shell settings put global block_untrusted_touches 0
-```
-
-With the opacity limit at 1.0 a single overlay can never exceed it, so this setting only matters
-for multi-overlay setups. The app displays its current value but does not change it.
-
-None of this affects `FLAG_WINDOW_IS_OBSCURED`, `filterTouchesWhenObscured` or
-`setHideOverlayWindows()`. Those are the target's own mitigations and keep working, which is
-exactly what makes the lifted-limit run a fair test of them.
+>[!Note]
+>None of this affects `FLAG_WINDOW_IS_OBSCURED`, `filterTouchesWhenObscured` or
+>`setHideOverlayWindows()`. Those are the target's own mitigations and keep working, which is
+>exactly what makes the lifted-limit run a fair test of them.
